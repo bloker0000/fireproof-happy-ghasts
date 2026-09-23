@@ -1,0 +1,22 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+plugins {
+	// lets gradle download the JDKs it needs
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'fireproof-happy-ghasts'
+
+['1.21.6', '1.21.9', '1.21.11', '26.1'].each { name ->
+	include name
+	project(":$name").projectDir = file("versions/$name")
+}

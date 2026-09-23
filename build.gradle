@@ -1,0 +1,76 @@
+// one jar per folder in versions/, all built from the shared code in src/
+plugins {
+	// -remap for obfuscated Minecraft (1.21.x), plain for 26.1 and newer
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+}
+
+subprojects {
+	def obfuscated = project.obfuscated.toBoolean()
+	def javaVersion = project.java_version as int
+
+	apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+
+	version = "${rootProject.mod_version}+mc${project.minecraft_label}".toString()
+	group = rootProject.maven_group
+	base.archivesName = rootProject.archives_name
+
+	sourceSets.main {
+		java.srcDir rootProject.file('src/main/java')
+		resources.srcDir rootProject.file('src/main/resources')
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:${project.minecraft_version}"
+		if (obfuscated) {
+			mappings loom.officialMojangMappings()
+			modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+		} else {
+			implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+		}
+	}
+
+	java {
+		sourceCompatibility = JavaVersion.toVersion(javaVersion)
+		targetCompatibility = JavaVersion.toVersion(javaVersion)
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.release = javaVersion
+		options.encoding = 'UTF-8'
+	}
+
+	processResources {
+		def props = [
+			version        : project.version,
+			minecraft_range: project.minecraft_range,
+			loader_min     : project.loader_min,
+			java_version   : javaVersion,
+		]
+		inputs.properties props
+		filesMatching(['fabric.mod.json', '*.mixins.json']) {
+			expand props
+		}
+	}
+
+	jar {
+		from(rootProject.file('LICENSE'))
+	}
+}
+
+def collectJars = tasks.register('collectJars', Sync) {
+	into layout.buildDirectory.dir('libs')
+	subprojects.each { p ->
+		from(p.tasks.named(p.obfuscated.toBoolean() ? 'remapJar' : 'jar'))
+	}
+}
+
+tasks.register('build') {
+	group = 'build'
+	description = 'Builds the mod for every Minecraft version group and puts the jars in build/libs/.'
+	dependsOn collectJars
+}
+
+tasks.register('clean', Delete) {
+	delete layout.buildDirectory
+}

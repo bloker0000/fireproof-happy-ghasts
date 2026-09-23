@@ -1,0 +1,22 @@
+{
+	"schemaVersion": 1,
+	"id": "fireproofghasts",
+	"version": "${version}",
+	"name": "Fireproof Happy Ghasts",
+	"description": "Makes happy ghasts immune to lava and fire. Server-side, so players without the mod can still join. Configure it with /fireproofghasts or in config/fireproofghasts.properties.",
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"fireproofghasts.FireproofGhasts"
+		]
+	},
+	"mixins": [
+		"fireproofghasts.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${loader_min}",
+		"minecraft": "${minecraft_range}",
+		"java": ">=${java_version}"
+	}
+}
